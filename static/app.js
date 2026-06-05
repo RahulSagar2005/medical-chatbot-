@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   setupMedicineStore();
   setupDoctorFilter();
   setupChat();
@@ -41,6 +41,8 @@ function setupMedicineStore() {
   if (document.getElementById("cartItems")) {
     fetch("/cart").then((response) => response.json()).then(renderCart).catch(() => {});
   }
+
+  document.getElementById("checkoutForm")?.addEventListener("submit", checkoutCart);
 }
 
 function renderCart(cart) {
@@ -50,7 +52,9 @@ function renderCart(cart) {
   if (!itemsEl || !totalEl || !countEl) return;
 
   countEl.textContent = cart.count || 0;
-  totalEl.textContent = `$${Number(cart.total || 0).toFixed(2)}`;
+  totalEl.textContent = `₹${Number(cart.total || 0).toFixed(0)}`;
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  if (checkoutBtn) checkoutBtn.disabled = !cart.items || cart.items.length === 0;
 
   if (!cart.items || cart.items.length === 0) {
     itemsEl.innerHTML = '<p class="text-muted">Your cart is empty.</p>';
@@ -61,11 +65,51 @@ function renderCart(cart) {
     <div class="cart-item">
       <div class="d-flex justify-content-between gap-3">
         <strong>${escapeHtml(item.name)}</strong>
-        <span>$${Number(item.subtotal).toFixed(2)}</span>
+        <span>₹${Number(item.subtotal).toFixed(0)}</span>
       </div>
-      <small class="text-muted">${escapeHtml(item.category)} · Qty ${item.quantity}</small>
+      <small class="text-muted">${escapeHtml(item.category)} Â· Qty ${item.quantity}</small>
     </div>
   `).join("");
+}
+
+async function checkoutCart(event) {
+  event?.preventDefault();
+  const button = document.getElementById("checkoutBtn");
+  const alertEl = document.getElementById("checkoutAlert");
+  const form = document.getElementById("checkoutForm");
+  if (!button || !alertEl || !form) return;
+  if (!form.reportValidity()) return;
+
+  button.disabled = true;
+  alertEl.className = "alert d-none";
+  let orderPlaced = false;
+  try {
+    const payload = Object.fromEntries(new FormData(form).entries());
+    const response = await fetch("/cart/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      if (data.login_url) {
+        window.location.href = data.login_url;
+        return;
+      }
+      throw new Error(data.error || "Checkout failed.");
+    }
+    renderCart(data.cart);
+    form.reset();
+    orderPlaced = true;
+    alertEl.textContent = data.message;
+    alertEl.className = "alert alert-success";
+    bootstrap.Offcanvas.getInstance(document.getElementById("cartPanel"))?.hide();
+  } catch (error) {
+    alertEl.textContent = error.message || "Checkout failed. Please try again.";
+    alertEl.className = "alert alert-danger";
+  } finally {
+    if (!orderPlaced) button.disabled = false;
+  }
 }
 
 function setupDoctorFilter() {
@@ -190,3 +234,4 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
