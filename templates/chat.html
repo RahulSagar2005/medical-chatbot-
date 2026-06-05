@@ -1,170 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Healthcare AI Agent</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Doctor | CareBridge Hospital</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="chat-page">
+  <nav class="navbar navbar-expand-lg bg-white sticky-top border-bottom">
+    <div class="container">
+      <a class="navbar-brand fw-bold text-teal" href="/"><i class="bi bi-heart-pulse-fill me-2"></i>CareBridge Hospital</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="/doctors">Doctors</a></li>
+          <li class="nav-item"><a class="nav-link" href="/pharmacy">Pharmacy</a></li>
+          <li class="nav-item"><a class="nav-link" href="/appointment">Appointment</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/chat">AI Doctor</a></li>
+          <li class="nav-item"><a class="btn btn-teal btn-sm px-3" href="/auth">Login</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-  <div class="chat-container">
-
-    <!-- HEADER -->
-    <div class="chat-header">
-      <div class="header-left">
-        <div class="bot-avatar">
-          <i class="bi bi-stars"></i>
+  <main class="chat-shell">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-5">
+          <span class="eyebrow">RAG powered assistant</span>
+          <h1 class="fw-bold mt-3">Ask the AI Doctor before your visit</h1>
+          <p class="text-muted">Get fast educational guidance from the hospital chatbot. For urgent or severe symptoms, contact emergency services immediately.</p>
+          <a class="btn btn-outline-teal" href="/appointment"><i class="bi bi-calendar2-check me-2"></i>Book follow-up care</a>
         </div>
-        <div class="header-info">
-          <span class="bot-name">Healthcare AI Agent</span>
-          <span class="bot-status"><span class="status-dot"></span>Online</span>
+        <div class="col-lg-7 d-flex justify-content-lg-end justify-content-center">
+          <div class="chat-container">
+            <div class="chat-header">
+              <div class="header-left">
+                <div class="bot-avatar"><i class="bi bi-stars"></i></div>
+                <div class="header-info"><span class="bot-name">Healthcare AI Agent</span><span class="bot-status"><span class="status-dot"></span>Online</span></div>
+              </div>
+              <div class="header-actions">
+                <a class="icon-btn" title="Appointments" href="/appointment"><i class="bi bi-calendar-plus"></i></a>
+                <a class="icon-btn" title="Home" href="/"><i class="bi bi-house"></i></a>
+              </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+              <div class="message bot-message" id="welcomeMsg">
+                <div class="bubble">Hello! I'm your Virtual Healthcare Assistant.<br>How can I help you today?<span class="msg-time" id="welcomeTime"></span></div>
+              </div>
+              <div class="quick-replies" id="quickReplies">
+                <button class="chip" onclick="sendChip(this)">What services do you offer?</button>
+                <button class="chip" onclick="sendChip(this)">Do you accept insurance?</button>
+                <button class="chip" onclick="sendChip(this)">Can I get a prescription refill?</button>
+                <button class="chip" onclick="sendChip(this)">How can I book an appointment?</button>
+              </div>
+            </div>
+            <div class="chat-disclaimer">This AI assistant is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified clinician for medical decisions.</div>
+            <div class="chat-input-area">
+              <div class="input-box">
+                <button class="attach-btn" title="Attach file"><i class="bi bi-paperclip"></i></button>
+                <textarea id="userInput" placeholder="Write your message..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send"><i class="bi bi-arrow-up"></i></button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn" title="Expand"><i class="bi bi-arrows-angle-expand"></i></button>
-        <button class="icon-btn" title="Close"><i class="bi bi-x-lg"></i></button>
-      </div>
     </div>
+  </main>
 
-    <!-- MESSAGES -->
-    <div class="chat-messages" id="chatMessages">
-
-      <!-- Bot welcome message -->
-      <div class="message bot-message" id="welcomeMsg">
-        <div class="bubble">
-          Hello! I'm your Virtual Healthcare Assistant. 👋
-          <br/>How can I help you today?
-          <span class="msg-time" id="welcomeTime"></span>
-        </div>
-      </div>
-
-      <!-- Quick reply chips -->
-      <div class="quick-replies" id="quickReplies">
-        <button class="chip" onclick="sendChip(this)">What services do you offer?</button>
-        <button class="chip" onclick="sendChip(this)">Do you accept insurance?</button>
-        <button class="chip" onclick="sendChip(this)">Can I get a prescription refill?</button>
-        <button class="chip" onclick="sendChip(this)">How can I book an appointment?</button>
-      </div>
-
-    </div>
-
-    <!-- DISCLAIMER -->
-    <div class="chat-disclaimer">
-      This is an AI-powered agent. It is not a substitute for professional medical advice, diagnosis, or treatment.
-      Always seek the advice of your physician or other qualified health provider with any questions you may have
-      regarding a medical condition.
-    </div>
-
-    <!-- INPUT -->
-    <div class="chat-input-area">
-      <div class="input-box">
-        <button class="attach-btn" title="Attach file"><i class="bi bi-paperclip"></i></button>
-        <textarea id="userInput" placeholder="Write your message..."
-          rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
-          <i class="bi bi-arrow-up"></i>
-        </button>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    // Set welcome message time
-    document.getElementById('welcomeTime').textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-
-    const messagesEl = document.getElementById('chatMessages');
-    const inputEl    = document.getElementById('userInput');
-    const sendBtn    = document.getElementById('sendBtn');
-
-    function autoResize(el) {
-      el.style.height = 'auto';
-      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-    }
-
-    function handleKey(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    }
-
-    function scrollToBottom() {
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    function hideQuickReplies() {
-      const qr = document.getElementById('quickReplies');
-      if (qr) qr.style.display = 'none';
-    }
-
-    function sendChip(btn) {
-      inputEl.value = btn.textContent;
-      sendMessage();
-    }
-
-    function addUserMessage(text) {
-      hideQuickReplies();
-      const div = document.createElement('div');
-      div.className = 'message user-message';
-      div.innerHTML = `<div class="bubble">${text}</div>`;
-      messagesEl.appendChild(div);
-      scrollToBottom();
-    }
-
-    function addBotMessage(text) {
-      const div = document.createElement('div');
-      div.className = 'message bot-message';
-      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      div.innerHTML = `<div class="bubble">${text}<span class="msg-time">${time}</span></div>`;
-      messagesEl.appendChild(div);
-      scrollToBottom();
-    }
-
-    function addTyping() {
-      const div = document.createElement('div');
-      div.className = 'message bot-message';
-      div.id = 'typingMsg';
-      div.innerHTML = `<div class="bubble typing-bubble">
-        <span></span><span></span><span></span>
-      </div>`;
-      messagesEl.appendChild(div);
-      scrollToBottom();
-    }
-
-    function removeTyping() {
-      const t = document.getElementById('typingMsg');
-      if (t) t.remove();
-    }
-
-    async function sendMessage() {
-      const text = inputEl.value.trim();
-      if (!text) return;
-
-      addUserMessage(text);
-      inputEl.value = '';
-      inputEl.style.height = 'auto';
-      sendBtn.disabled = true;
-      addTyping();
-
-      try {
-        const res = await fetch('/get', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ msg: text })
-        });
-        const data = await res.json();
-        removeTyping();
-        addBotMessage(data.response || data.answer || 'Sorry, I could not get a response.');
-      } catch (err) {
-        removeTyping();
-        addBotMessage('Sorry, something went wrong. Please try again.');
-      }
-
-      sendBtn.disabled = false;
-      inputEl.focus();
-    }
-  </script>
-
+  <footer class="site-footer">
+    <div class="container"><div class="d-flex flex-column flex-md-row justify-content-between gap-3"><span>CareBridge Hospital</span><span>Emergency: +1 555 0198</span><span>care@carebridge.example</span></div></div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
