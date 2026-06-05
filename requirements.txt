@@ -13,4 +13,4 @@ pypdf
 python-dotenv
 pinecone-client[grpc]==5.0.1
 openai  
--e .
+gunicorn
