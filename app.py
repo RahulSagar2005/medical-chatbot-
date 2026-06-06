@@ -2,6 +2,7 @@
 from email.message import EmailMessage
 from uuid import uuid4
 import smtplib
+import threading
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 from src.helper import download_hugging_face_embeddings 
@@ -107,18 +108,16 @@ def public_docs(cursor):
 def inject_current_user():
     return {"current_user": session.get("user")}
 
-def send_email(to_email, subject, body):
-    if not to_email:
-        return False
-    mail_host = os.getenv("MAIL_HOST","smtp.gmail.com")
+def _send_email_worker(to_email, subject, body):
+    mail_host = os.getenv("MAIL_HOST", "smtp.gmail.com")
     mail_port = int(os.getenv("MAIL_PORT", "587"))
     mail_user = os.getenv("MAIL_USERNAME")
     mail_password = os.getenv("MAIL_PASSWORD")
     mail_from = os.getenv("MAIL_FROM", mail_user or "care@arogyaplus.example")
 
-    if not mail_host:
-        print(f"\n--- Email preview ---\nTo: {to_email}\nSubject: {subject}\n{body}\n--- End email preview ---\n")
-        return False
+    if not mail_user or not mail_password:
+        print(f"\n--- Email preview ---\nTo: {to_email}\nSubject: {subject}\n{body}\n---\n")
+        return
 
     message = EmailMessage()
     message["From"] = mail_from
@@ -127,16 +126,21 @@ def send_email(to_email, subject, body):
     message.set_content(body)
 
     try:
-        with smtplib.SMTP(mail_host, mail_port) as smtp:
-            if os.getenv("MAIL_USE_TLS", "true").lower() == "true":
-                smtp.starttls()
-            if mail_user and mail_password:
-                smtp.login(mail_user, mail_password)
+        with smtplib.SMTP(mail_host, mail_port, timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(mail_user, mail_password)
             smtp.send_message(message)
-        return True
+        print(f"Email sent to {to_email}")
     except Exception as exc:
         print(f"Email delivery failed for {to_email}: {exc}")
-        return False
+
+def send_email(to_email, subject, body):
+    if not to_email:
+        return
+    # Send email in background thread so it never blocks the response
+    thread = threading.Thread(target=_send_email_worker, args=(to_email, subject, body))
+    thread.daemon = True
+    thread.start()
 
 def seed_database():
     mongo_client.admin.command("ping")
@@ -442,4 +446,3 @@ def chat():
 
 if __name__ == "__main__": 
     app.run(host="0.0.0.0", port=7860, debug=True)
-
