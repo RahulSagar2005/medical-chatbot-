@@ -23,7 +23,12 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "ArogyaPlus-dev-secret")
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "ArogyaPlus_hospital")
-mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+mongo_client = MongoClient(
+    MONGO_URI,
+    serverSelectionTimeoutMS=5000,
+    tls=True,
+    tlsAllowInvalidCertificates=True
+)
 db = mongo_client[MONGO_DB_NAME]
 
 DOCTOR_IMAGE_URLS = {
