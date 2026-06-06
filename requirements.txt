@@ -6,12 +6,13 @@ langchain-openai==0.1.25
 langchain-experimental==0.0.65
 langchain-huggingface==0.0.3
 langchain-groq==0.1.9
-langchain-pinecone==0.0.1
+langchain-pinecone==0.1.3
 flask
 pymongo==4.10.1
 pypdf
 python-dotenv
-pinecone-client==3.2.2
+pinecone==3.2.2
 openai
 gunicorn
 flask-mail
+werkzeug
