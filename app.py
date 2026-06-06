@@ -110,7 +110,7 @@ def inject_current_user():
 def send_email(to_email, subject, body):
     if not to_email:
         return False
-    mail_host = os.getenv("MAIL_HOST")
+    mail_host = os.getenv("MAIL_HOST","smtp.gmail.com")
     mail_port = int(os.getenv("MAIL_PORT", "587"))
     mail_user = os.getenv("MAIL_USERNAME")
     mail_password = os.getenv("MAIL_PASSWORD")
