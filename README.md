@@ -1,8 +1,8 @@
 ---
 title: ArogyaPlus
 emoji: 🏥
-colorFrom: teal
-colorTo: green
+colorFrom: green
+colorTo: blue
 sdk: docker
 pinned: false
 ---
