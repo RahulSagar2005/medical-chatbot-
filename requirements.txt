@@ -11,7 +11,6 @@ flask
 pymongo==4.10.1
 pypdf
 python-dotenv
-pinecone==3.2.2
 openai
 gunicorn
 flask-mail
